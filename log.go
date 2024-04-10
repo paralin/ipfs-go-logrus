@@ -4,6 +4,8 @@ package log
 
 import (
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 // StandardLogger provides API compatibility with standard printf loggers
@@ -40,15 +42,21 @@ func Logger(system string) *ZapEventLogger {
 	logger := getLogger(system)
 
 	return &ZapEventLogger{
-		system:         system,
-		StandardLogger: logger,
+		system: system,
+		Entry:  logger,
 	}
 }
 
 // ZapEventLogger implements the EventLogger and wraps a go-logging Logger
 type ZapEventLogger struct {
-	StandardLogger
+	*logrus.Entry
 	system string
+}
+
+// Warnw is for compatibility
+// Deprecated: use Warn(args ...interface{}) instead
+func (logger *ZapEventLogger) Warnw(args ...interface{}) {
+	logger.Warn(args...)
 }
 
 // Warning is for compatibility
@@ -61,6 +69,49 @@ func (logger *ZapEventLogger) Warning(args ...interface{}) {
 // Deprecated: use Warnf(format string, args ...interface{}) instead
 func (logger *ZapEventLogger) Warningf(format string, args ...interface{}) {
 	logger.Warnf(format, args...)
+}
+
+// Debugw logs a message with some additional context. The variadic key-value
+// pairs are treated as they are in With.
+//
+// When debug-level logging is disabled, this is much faster than
+//
+//	s.With(keysAndValues).Debug(msg)
+func (logger *ZapEventLogger) Debugw(msg string, keysAndValues ...interface{}) {
+	// TODO
+	logger.Debug(msg, keysAndValues)
+}
+
+// Infow logs a message with some additional context. The variadic key-value
+// pairs are treated as they are in With.
+func (logger *ZapEventLogger) Infow(msg string, keysAndValues ...interface{}) {
+	// TODO
+	logger.Info(msg, keysAndValues)
+}
+
+// Errorw logs a message with some additional context. The variadic key-value
+// pairs are treated as they are in With.
+func (logger *ZapEventLogger) Errorw(msg string, keysAndValues ...interface{}) {
+	logger.Error(msg, keysAndValues)
+}
+
+// DPanicw logs a message with some additional context. In development, the
+// logger then panics. (See DPanicLevel for details.) The variadic key-value
+// pairs are treated as they are in With.
+func (logger *ZapEventLogger) DPanicw(msg string, keysAndValues ...interface{}) {
+	logger.Panic(msg, keysAndValues)
+}
+
+// Panicw logs a message with some additional context, then panics. The
+// variadic key-value pairs are treated as they are in With.
+func (logger *ZapEventLogger) Panicw(msg string, keysAndValues ...interface{}) {
+	logger.Panic(msg, keysAndValues)
+}
+
+// Fatalw logs a message with some additional context, then calls os.Exit. The
+// variadic key-value pairs are treated as they are in With.
+func (logger *ZapEventLogger) Fatalw(msg string, keysAndValues ...interface{}) {
+	logger.Fatal(msg, keysAndValues)
 }
 
 // FormatRFC3339 returns the given time in UTC with RFC3999Nano format.

@@ -2,6 +2,7 @@ package log
 
 import (
 	"errors"
+	"io"
 	"sync"
 
 	"github.com/sirupsen/logrus"
@@ -10,14 +11,34 @@ import (
 // ErrNoSuchLogger is returned when the util pkg is asked for a non existent logger
 var ErrNoSuchLogger = errors.New("error: No such logger")
 
-var loggerMutex sync.RWMutex // guards access to global logger state
+var loggerMutex sync.Mutex // guards access to global logger state
 
 // loggerCore is the primary logging core
 var loggerCore *logrus.Entry
 
+type nullFormatter struct{}
+
+func (f *nullFormatter) Format(*logrus.Entry) ([]byte, error) {
+	return nil, nil
+}
+
+func NewNoopLogger() *logrus.Entry {
+	log := logrus.New()
+	log.Out = io.Discard
+	log.Formatter = &nullFormatter{}
+	return logrus.NewEntry(log)
+}
+
 // GetConfig returns a copy of the saved config. It can be inspected, modified,
 // and re-applied using a subsequent call to SetupLogging().
 func GetLogger() *logrus.Entry {
+	loggerMutex.Lock()
+	defer loggerMutex.Unlock()
+
+	if loggerCore == nil {
+		loggerCore = NewNoopLogger()
+	}
+
 	return loggerCore
 }
 
@@ -28,6 +49,10 @@ func GetLogger() *logrus.Entry {
 func SetupLogging(le *logrus.Entry) {
 	loggerMutex.Lock()
 	defer loggerMutex.Unlock()
+
+	if le == nil {
+		le = NewNoopLogger()
+	}
 
 	loggerCore = le
 }
@@ -42,12 +67,20 @@ func SetAllLoggers(lvl LogLevel) {
 	loggerMutex.Lock()
 	defer loggerMutex.Unlock()
 
+	if loggerCore == nil {
+		loggerCore = NewNoopLogger()
+	}
+
 	loggerCore.Level = lvl
 }
 
-func getLogger(name string) StandardLogger {
+func getLogger(name string) *logrus.Entry {
 	loggerMutex.Lock()
 	defer loggerMutex.Unlock()
+
+	if loggerCore == nil {
+		loggerCore = NewNoopLogger()
+	}
 
 	return loggerCore.WithField("logger-name", name)
 }
