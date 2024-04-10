@@ -1,19 +1,23 @@
 package log
 
-import "go.uber.org/zap/zapcore"
+import (
+	"strings"
+
+	"github.com/sirupsen/logrus"
+)
 
 // LogLevel represents a log severity level. Use the package variables as an
 // enum.
-type LogLevel zapcore.Level
+type LogLevel = logrus.Level
 
 var (
-	LevelDebug  = LogLevel(zapcore.DebugLevel)
-	LevelInfo   = LogLevel(zapcore.InfoLevel)
-	LevelWarn   = LogLevel(zapcore.WarnLevel)
-	LevelError  = LogLevel(zapcore.ErrorLevel)
-	LevelDPanic = LogLevel(zapcore.DPanicLevel)
-	LevelPanic  = LogLevel(zapcore.PanicLevel)
-	LevelFatal  = LogLevel(zapcore.FatalLevel)
+	LevelDebug  = LogLevel(logrus.DebugLevel)
+	LevelInfo   = LogLevel(logrus.InfoLevel)
+	LevelWarn   = LogLevel(logrus.WarnLevel)
+	LevelError  = LogLevel(logrus.ErrorLevel)
+	LevelDPanic = LogLevel(logrus.PanicLevel)
+	LevelPanic  = LogLevel(logrus.PanicLevel)
+	LevelFatal  = LogLevel(logrus.FatalLevel)
 )
 
 // LevelFromString parses a string-based level and returns the corresponding
@@ -24,7 +28,9 @@ var (
 //
 // The returned LogLevel must be discarded if error is not nil.
 func LevelFromString(level string) (LogLevel, error) {
-	lvl := zapcore.InfoLevel // zero value
-	err := lvl.Set(level)
-	return LogLevel(lvl), err
+	level = strings.ToLower(level)
+	if level == "dpanic" {
+		level = "panic"
+	}
+	return logrus.ParseLevel(level)
 }

@@ -4,9 +4,6 @@ package log
 
 import (
 	"time"
-
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 // StandardLogger provides API compatibility with standard printf loggers
@@ -41,33 +38,29 @@ func Logger(system string) *ZapEventLogger {
 	}
 
 	logger := getLogger(system)
-	skipLogger := logger.Desugar().WithOptions(zap.AddCallerSkip(1)).Sugar()
 
 	return &ZapEventLogger{
-		system:        system,
-		SugaredLogger: *logger,
-		skipLogger:    *skipLogger,
+		system:         system,
+		StandardLogger: logger,
 	}
 }
 
 // ZapEventLogger implements the EventLogger and wraps a go-logging Logger
 type ZapEventLogger struct {
-	zap.SugaredLogger
-	// used to fix the caller location when calling Warning and Warningf.
-	skipLogger zap.SugaredLogger
-	system     string
+	StandardLogger
+	system string
 }
 
 // Warning is for compatibility
 // Deprecated: use Warn(args ...interface{}) instead
 func (logger *ZapEventLogger) Warning(args ...interface{}) {
-	logger.skipLogger.Warn(args...)
+	logger.Warn(args...)
 }
 
 // Warningf is for compatibility
 // Deprecated: use Warnf(format string, args ...interface{}) instead
 func (logger *ZapEventLogger) Warningf(format string, args ...interface{}) {
-	logger.skipLogger.Warnf(format, args...)
+	logger.Warnf(format, args...)
 }
 
 // FormatRFC3339 returns the given time in UTC with RFC3999Nano format.
@@ -75,20 +68,10 @@ func FormatRFC3339(t time.Time) string {
 	return t.UTC().Format(time.RFC3339Nano)
 }
 
-func WithStacktrace(l *ZapEventLogger, level LogLevel) *ZapEventLogger {
-	copyLogger := *l
-	copyLogger.SugaredLogger = *copyLogger.SugaredLogger.Desugar().
-		WithOptions(zap.AddStacktrace(zapcore.Level(level))).Sugar()
-	copyLogger.skipLogger = *copyLogger.SugaredLogger.Desugar().WithOptions(zap.AddCallerSkip(1)).Sugar()
-	return &copyLogger
-}
-
 // WithSkip returns a new logger that skips the specified number of stack frames when reporting the
 // line/file.
 func WithSkip(l *ZapEventLogger, skip int) *ZapEventLogger {
+	// no-op
 	copyLogger := *l
-	copyLogger.SugaredLogger = *copyLogger.SugaredLogger.Desugar().
-		WithOptions(zap.AddCallerSkip(skip)).Sugar()
-	copyLogger.skipLogger = *copyLogger.SugaredLogger.Desugar().WithOptions(zap.AddCallerSkip(1)).Sugar()
 	return &copyLogger
 }

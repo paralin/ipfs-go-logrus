@@ -1,14 +1,10 @@
-module github.com/ipfs/go-log/v2
-
-require (
-	github.com/mattn/go-isatty v0.0.14
-	go.uber.org/multierr v1.6.0
-	go.uber.org/zap v1.19.1
-)
-
-require (
-	go.uber.org/atomic v1.7.0 // indirect
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
-)
+module github.com/paralin/ipfs-go-logrus
 
 go 1.21
+
+require github.com/sirupsen/logrus v1.9.3
+
+require (
+	github.com/stretchr/testify v1.8.1 // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
+)
